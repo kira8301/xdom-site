@@ -16,7 +16,7 @@ function copy(t){try{navigator.clipboard.writeText(t);say2('تم النسخ')}ca
 var demoMsg='وضع تجريبي: لا يوجد مزود AI متصل بهذا الموقع بعد، فلن تظهر نتائج حقيقية.';
 function $i(i){return document.getElementById(i)}
 root.innerHTML='<div class="dash open"><div class="tabs"><button data-t="chat" class="on">محادثة</button><button data-t="image">صور</button><button data-t="video">فيديو</button><button data-t="tools">أدوات</button></div>'
-+'<div class="pane on" id="p-chat"><div class="note" id="n-chat" hidden></div><div id="msgs" aria-live="polite"></div><div class="row"><textarea id="ci" rows="1" maxlength="4000" placeholder="اسأل أي شيء..."></textarea><button class="btn solid" id="cs">إرسال</button></div><div class="acts"><button id="cn">محادثة جديدة</button></div></div>'
++'<div class="pane on" id="p-chat"><div class="note" id="n-chat" hidden></div><div class="bar"><button class="pill" id="cn">+ محادثة جديدة</button></div><div id="msgs" aria-live="polite"></div><div class="comp"><textarea id="ci" rows="1" maxlength="4000" placeholder="اسأل أي شيء..."></textarea><button class="send" id="cs" aria-label="إرسال"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></div></div>'
 +'<div class="pane" id="p-image"><div class="note" id="n-image" hidden></div><div class="row"><textarea id="ii" maxlength="500" placeholder="Create a dark futuristic city at night"></textarea><button class="btn solid" id="ig">توليد</button></div><div class="out" id="io"></div></div>'
 +'<div class="pane" id="p-video"><div class="note" id="n-video"></div><div class="row"><textarea id="vi" maxlength="500" placeholder="A cinematic black sports car driving through Tokyo at night"></textarea><button class="btn solid" id="vg">توليد</button></div><div class="out" id="vo"></div></div>'
 +'<div class="pane" id="p-tools"><div class="note" id="n-tools" hidden></div><div class="tl" id="tl"></div><div class="row"><textarea id="ti" maxlength="4000" placeholder="الصق النص هنا"></textarea><button class="btn solid" id="tg">تنفيذ</button></div><div class="out" id="to"></div></div></div>';
@@ -25,15 +25,15 @@ try{msgs=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){msgs=[]}if(!Array.
 function save(){try{localStorage.setItem(KEY,JSON.stringify(msgs.slice(-40)))}catch(e){}}
 function draw(extra){var h='';msgs.forEach(function(m,i){if(m.role==='user')h+='<div class="m u" dir="auto">'+esc(m.content).replace(/\n/g,'<br>')+'</div>';
 else h+='<div class="m a" dir="auto">'+md(m.content)+'<div class="acts"><button data-c="'+i+'">نسخ</button>'+(i===msgs.length-1?'<button data-r="1">إعادة توليد</button>':'')+'</div></div>'});
-if(extra)h+=extra;var el=$i('msgs');el.innerHTML=h||'<div class="m a d">اسأل بالعربية أو English أو Français.</div>';el.scrollTop=el.scrollHeight}
-$i('msgs').onclick=function(e){var c=e.target.closest('[data-c]');if(c)return copy(msgs[c.dataset.c].content);if(e.target.closest('[data-r]')&&!busy){msgs.pop();ask()}};
+if(extra)h+=extra;var el=$i('msgs');el.innerHTML=h||'<div class="hello"><h3>كيف أقدر أساعدك؟</h3><div class="chips"><button data-p="اقترح لي 5 أفكار لمحتوى تيك توك">اقترح لي 5 أفكار لمحتوى تيك توك</button><button data-p="اشرح لي كيف يعمل الذكاء الاصطناعي ببساطة">اشرح لي كيف يعمل الذكاء الاصطناعي ببساطة</button><button data-p="Translate to Arabic: Good morning, how are you?">Translate to Arabic: Good morning…</button></div></div>';el.scrollTop=el.scrollHeight}
+$i('msgs').onclick=function(e){var p=e.target.closest('[data-p]');if(p){$i('ci').value=p.dataset.p;send();return}var c=e.target.closest('[data-c]');if(c)return copy(msgs[c.dataset.c].content);if(e.target.closest('[data-r]')&&!busy){msgs.pop();ask()}};
 function ask(){busy=true;draw('<div class="m a d dots"><i></i><i></i><i></i></div>');
 post('chat',{messages:msgs}).then(function(d){busy=false;if(d.demo)return draw('<div class="m a d">'+demoMsg+'</div>');
 if(d.error)return draw('<div class="m a d">'+esc(d.error)+'</div>');msgs.push({role:'assistant',content:d.reply||'(لا يوجد رد)'});save();draw()})}
-function send(){var v=$i('ci').value.trim();if(!v||busy)return;$i('ci').value='';msgs.push({role:'user',content:v});save();ask()}
-$i('cs').onclick=send;$i('ci').onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey&&!/Mobi|Android|iPhone/.test(navigator.userAgent)){e.preventDefault();send()}};
+function send(){var v=$i('ci').value.trim();if(!v||busy)return;$i('ci').value='';$i('ci').style.height='auto';msgs.push({role:'user',content:v});save();ask()}
+$i('ci').oninput=function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'};$i('cs').onclick=send;$i('ci').onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey&&!/Mobi|Android|iPhone/.test(navigator.userAgent)){e.preventDefault();send()}};
 $i('cn').onclick=function(){msgs=[];save();draw()};
-['cs','ig','vg','tg'].forEach(function(i){$i(i).dataset.l=$i(i).textContent});
+['ig','vg','tg'].forEach(function(i){$i(i).dataset.l=$i(i).textContent});
 function busyBtn(b,on){b.disabled=on;b.textContent=on?'...':b.dataset.l}
 function gen(kind,inId,outId,btn){var p=$i(inId).value.trim();if(p.length<3)return say2('اكتب وصفاً أطول');var o=$i(outId);busyBtn($i(btn),true);o.innerHTML='<div class="dots"><i></i><i></i><i></i></div>';
 post(kind,{prompt:p}).then(function(d){busyBtn($i(btn),false);
